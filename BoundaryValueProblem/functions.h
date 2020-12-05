@@ -2,7 +2,7 @@
 #include <map>
 #include <ostream>
 
-const int VARIANT = 25;
+const int VARIANT = 7;
 const double EPS_AUTO_STEP = 1E-5;
 const double EPS_LIMIT = 1E-4;
 const double CHI = 0.2;

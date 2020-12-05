@@ -6,6 +6,9 @@
 #include <corecrt_math_defines.h>
 #include <vector>
 
+/*
+ * func to calculate coefficient A(x)
+ */
 double coef_A(double x) {
 	switch (VARIANT) {
 	case 25:
@@ -19,6 +22,9 @@ double coef_A(double x) {
 	throw std::runtime_error("Incorrect variant");
 }
 
+/*
+ * func to calculate coefficient B(x)
+ */
 double coef_B(double x) {
 	switch (VARIANT) {
 	case 25:
@@ -32,6 +38,9 @@ double coef_B(double x) {
 	throw std::runtime_error("Incorrect variant");
 }
 
+/*
+ * func to calculate coefficient C(x)
+ */
 double coef_C(double x) {
 	switch (VARIANT) {
 	case 25:
@@ -45,11 +54,17 @@ double coef_C(double x) {
 	throw std::runtime_error("Incorrect variant");
 }
 
+/*
+ * func to calculate function F
+ */
 double coef_F(double x) {
 	return coef_Y_pr(x, 2) + coef_A(x) * coef_Y_pr(x, 1) - coef_B(x) * coef_Y_pr(x, 0) + coef_C(x) * sin(
 		coef_Y_pr(x, 0));
 }
 
+/*
+ * func to calculate function Y pr
+ */
 double coef_Y_pr(double x, int derivative_number) {
 	switch (derivative_number) {
 	case 0:
@@ -63,6 +78,13 @@ double coef_Y_pr(double x, int derivative_number) {
 	throw std::runtime_error("Can`t compute this derivative of Ypr!");
 }
 
+/*
+ * func to calculate one step of runge kutty method
+ * z, y - old values
+ * new_z, new_y - new value
+ * h - step
+ * i * h - current value of x
+ */
 void runge_kutty_step(double z, double y, int i, double h, double& new_z, double& new_y) {
 	double k_y[4];
 	double k_z[4];
@@ -82,6 +104,9 @@ void runge_kutty_step(double z, double y, int i, double h, double& new_z, double
 	new_z = z + 1.0 / 6.0 * (k_z[0] + 2.0 * k_z[1] + 2.0 * k_z[2] + k_z[3]);
 }
 
+/*
+ * func to calculate runge kutty method to approximate function z by varying alpha0
+ */
 void runge_kutty_method(double y0, double alpha0, double& h, int iter, std::map<float, double>& z,
                         std::map<float, double>& y, std::ostream& ostr) {
 	z.clear();
@@ -124,7 +149,9 @@ void runge_kutty_method(double y0, double alpha0, double& h, int iter, std::map<
 		std::endl;
 }
 
-
+/*
+ * func to calculate shooting method
+ */
 void shooting_method(std::ostream& ostr) {
 	double y0 = 1.0, h = 0.1, a0 = 0, a1 = 3.0;
 	std::map<float, double> z, y;
@@ -177,24 +204,34 @@ void shooting_method(std::ostream& ostr) {
 	ostr << std::endl << "The absolute value of the maximum error: " << std::fixed << max_delta << std::endl;
 }
 
+/*
+ * func to calculate function f(t,x)
+ */
 double f(double t, double x) {
 	return 0.1 * sin(M_PI * x) * VARIANT + 0.1 * sin(M_PI * x) * M_PI * M_PI * t * VARIANT * CHI;
 }
 
+/*
+ * func to calculate function u(t,x)
+ */
 double u(double t, double x) {
 	// u(t,x)=x + 0.1*t*sin(πx)*Variant
 	return x + 0.1 * t * sin(M_PI * x) * VARIANT;
 }
 
+/*
+ * func to calculate finite difference scheme method with explicit scheme
+ */
 void finite_difference_scheme_method_explicit(std::ostream& ostr) {
 	ostr << std::endl << "Finite difference scheme method (explicit scheme)" << std::endl;
+	ostr << "xI = " << std::setprecision(2) << CHI << std::endl;
 
 	double max_delta = 0;
 	std::vector<double> u_values;
 
 	for (int N = 8; N <= 32; N *= 2) {
-		ostr << std::endl << "N = " << N << std::endl;
-		ostr << std::setw(8) << "t  |" << std::setw(22) << "delta        " << std::setw(4) << "x:";
+		ostr << "N = " << N << std::endl;
+		ostr << std::setw(8) << "t  |" << std::setw(20) << "delta        " << std::setw(4) << "x:";
 		max_delta = 0;
 		double h = 1.0 / N;
 		double tau = (h * h) / (4 * CHI);
@@ -232,10 +269,10 @@ void finite_difference_scheme_method_explicit(std::ostream& ostr) {
 				max_delta = delta;
 			}
 
-			ostr << std::setw(7) << std::setprecision(3) << std::fixed << t << "|" << std::setw(22) <<
-				std::setprecision(18);
+			ostr << std::setw(7) << std::setprecision(3) << std::fixed << t << "|" << std::setw(20) <<
+				std::setprecision(16);
 			if (delta < 0.0001) {
-				ostr << std::setprecision(14) << std::scientific << delta << std::setw(4) << "| ";
+				ostr << std::setprecision(12) << std::scientific << delta << std::setw(4) << "| ";
 			} else {
 				ostr << std::fixed << delta << std::setw(4) << "| ";
 			}
@@ -250,10 +287,13 @@ void finite_difference_scheme_method_explicit(std::ostream& ostr) {
 			i++;
 		}
 
-		ostr << std::endl << "Del_T = " << std::setprecision(17) << max_delta << std::endl << std::endl;
+		ostr << std::endl << "Del_T = " << std::setprecision(16) << max_delta << std::endl << std::endl;
 	}
 }
 
+/*
+ * func to calculate run through method for tridiagonal matrix
+ */
 std::vector<double> run_through_method(double coef, std::vector<double> rights) {
 	int n = rights.size();
 	std::vector<double> alpha(n), beta(n);
@@ -276,6 +316,9 @@ std::vector<double> run_through_method(double coef, std::vector<double> rights) 
 	return x;
 }
 
+/*
+ * func to calculate finite difference scheme method with implicit scheme
+ */
 void finite_difference_scheme_method_implicit(std::ostream& ostr) {
 	ostr << std::endl << "Finite difference scheme method (implicit scheme)" << std::endl;
 
@@ -283,8 +326,8 @@ void finite_difference_scheme_method_implicit(std::ostream& ostr) {
 	std::vector<double> u_values;
 
 	for (int N = 8; N <= 32; N *= 2) {
-		ostr << std::endl << "N = " << N << std::endl;
-		ostr << std::setw(8) << "t  |" << std::setw(22) << "delta        " << std::setw(4) << "x:";
+		ostr << "N = " << N << std::endl;
+		ostr << std::setw(8) << "t  |" << std::setw(20) << "delta        " << std::setw(4) << "x:";
 		max_delta = 0;
 		double h = 1.0 / N;
 		double tau = h;
@@ -327,10 +370,10 @@ void finite_difference_scheme_method_implicit(std::ostream& ostr) {
 				max_delta = delta;
 			}
 
-			ostr << std::setw(7) << std::setprecision(3) << std::fixed << t << "|" << std::setw(22) <<
-				std::setprecision(18);
+			ostr << std::setw(7) << std::setprecision(3) << std::fixed << t << "|" << std::setw(20) <<
+				std::setprecision(16);
 			if (delta < 0.0001) {
-				ostr << std::setprecision(14) << std::scientific << delta << std::setw(4) << "| ";
+				ostr << std::setprecision(12) << std::scientific << delta << std::setw(4) << "| ";
 			} else {
 				ostr << std::fixed << delta << std::setw(4) << "| ";
 			}
@@ -345,6 +388,6 @@ void finite_difference_scheme_method_implicit(std::ostream& ostr) {
 			i++;
 		}
 
-		ostr << std::endl << "Del_T = " << std::setprecision(17) << max_delta << std::endl << std::endl;
+		ostr << std::endl << "Del_T = " << std::setprecision(16) << max_delta << std::endl << std::endl;
 	}
 }
