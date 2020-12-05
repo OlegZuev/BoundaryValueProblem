@@ -2,10 +2,10 @@
 #include <iostream>
 #include <string>
 #include <fstream>
-#include "Functions.h"
+#include "functions.h"
 using namespace std;
 
-const bool PRINT_TO_FILE = false;
+const bool PRINT_TO_FILE = true;
 
 int main()
 {
@@ -14,9 +14,9 @@ int main()
 
 	out << "Variant: " << VARIANT << endl;
 
-	//shooting_method( out);
+	shooting_method( out);
 
-	//finite_difference_scheme_method_evident(out);
+	finite_difference_scheme_method_explicit(out);
 
-	finite_difference_scheme_method_unevident(out);
+	finite_difference_scheme_method_implicit(out);
 }

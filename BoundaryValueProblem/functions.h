@@ -23,6 +23,6 @@ void runge_kutty_method(double y0, double alpha0, double& h, int iter, double& m
                                             std::map<float, double>& z, std::map<float, double>& y, std::ostream& ostr);
 void shooting_method(std::ostream& ostr);
 
-void finite_difference_scheme_method_evident(std::ostream& ostr);
+void finite_difference_scheme_method_explicit(std::ostream& ostr);
 
-void finite_difference_scheme_method_unevident(std::ostream& ostr);
+void finite_difference_scheme_method_implicit(std::ostream& ostr);

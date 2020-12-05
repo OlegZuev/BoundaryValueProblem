@@ -3,14 +3,13 @@
 #include <ostream>
 #include <iomanip>
 #include <stdexcept>
-#include <math.h>
 #include <corecrt_math_defines.h>
 #include <vector>
 
 double coef_A(double x) {
 	switch (VARIANT) {
-	case 0:
-		return 0;
+	case 25:
+		return 50 * (x + 1);
 	case 5:
 		return 40 * (x + 1);
 	case 7:
@@ -22,8 +21,8 @@ double coef_A(double x) {
 
 double coef_B(double x) {
 	switch (VARIANT) {
-	case 0:
-		return 0;
+	case 25:
+		return pow(x, 2) + 1;
 	case 5:
 		return pow(x, 2) + 2;
 	case 7:
@@ -35,8 +34,8 @@ double coef_B(double x) {
 
 double coef_C(double x) {
 	switch (VARIANT) {
-	case 0:
-		return 0;
+	case 25:
+		return x + 1;
 	case 5:
 		return x + 1;
 	case 7:
@@ -84,7 +83,7 @@ void runge_kutty_step(double z, double y, int i, double h, double& new_z, double
 }
 
 void runge_kutty_method(double y0, double alpha0, double& h, int iter, std::map<float, double>& z,
-	std::map<float, double>& y, std::ostream& ostr) {
+                        std::map<float, double>& y, std::ostream& ostr) {
 	z.clear();
 	y.clear();
 	double delta = -1.0;
@@ -102,8 +101,7 @@ void runge_kutty_method(double y0, double alpha0, double& h, int iter, std::map<
 		if (abs(y_j - y_asterisk) >= EPS_AUTO_STEP) {
 			h /= 2.0;
 			i = 0;
-		}
-		else {
+		} else {
 			i++;
 			y[i * h] = y_j;
 			z[i * h] = z_j;
@@ -143,8 +141,7 @@ void shooting_method(std::ostream& ostr) {
 		runge_kutty_method(y0, a2, h, i, z, y, ostr);
 		if (y[1.0] < 2.0) {
 			a0 = a2;
-		}
-		else {
+		} else {
 			a1 = a2;
 		}
 
@@ -168,8 +165,7 @@ void shooting_method(std::ostream& ostr) {
 
 		if (max_delta < 0.0001) {
 			ostr << std::setprecision(11) << std::scientific << error << "|" << std::endl;
-		}
-		else {
+		} else {
 			ostr << std::setprecision(15) << std::fixed << error << "|" << std::endl;
 		}
 
@@ -182,11 +178,6 @@ void shooting_method(std::ostream& ostr) {
 }
 
 double f(double t, double x) {
-	// u(t,x)=x + 0.1*t*sin(πx)*Variant
-	// f = u' - chi*u''
-	// return 1 + 0.1 * cos(M_PI * x) * M_PI * t * VARIANT
-	// 	+ 0.1 * sin(M_PI * x) * M_PI * M_PI * t * VARIANT * CHI;
-	//return 0.1 * variant * sin(M_PI * x) + 0.1 * 0.2 * M_PI * M_PI * t * variant * sin(M_PI * x);
 	return 0.1 * sin(M_PI * x) * VARIANT + 0.1 * sin(M_PI * x) * M_PI * M_PI * t * VARIANT * CHI;
 }
 
@@ -195,8 +186,8 @@ double u(double t, double x) {
 	return x + 0.1 * t * sin(M_PI * x) * VARIANT;
 }
 
-void finite_difference_scheme_method_evident(std::ostream& ostr) {
-	ostr << std::endl << "Finite difference scheme method (obvious scheme)" << std::endl;
+void finite_difference_scheme_method_explicit(std::ostream& ostr) {
+	ostr << std::endl << "Finite difference scheme method (explicit scheme)" << std::endl;
 
 	double max_delta = 0;
 	std::vector<double> u_values;
@@ -245,8 +236,7 @@ void finite_difference_scheme_method_evident(std::ostream& ostr) {
 				std::setprecision(18);
 			if (delta < 0.0001) {
 				ostr << std::setprecision(14) << std::scientific << delta << std::setw(4) << "| ";
-			}
-			else {
+			} else {
 				ostr << std::fixed << delta << std::setw(4) << "| ";
 			}
 
@@ -264,21 +254,21 @@ void finite_difference_scheme_method_evident(std::ostream& ostr) {
 	}
 }
 
-std::vector<double> run_through_method(std::vector<double> a, std::vector<double> c, std::vector<double> b,
-	std::vector<double> rights) {
+std::vector<double> run_through_method(double coef, std::vector<double> rights) {
 	int n = rights.size();
 	std::vector<double> alpha(n), beta(n);
-	alpha[1] = b[0] / c[0];
-	beta[1] = rights[0] / c[0];
-
+	double a = coef;
+	double c = 1 + 2 * coef;
+	double b = coef;
+	alpha[1] = b / c;
+	beta[1] = rights[0] / c;
 	for (int i = 1; i < n - 1; i++) {
-		alpha[i + 1] = b[i] / (c[i] - a[i] * alpha[i]);
-		beta[i + 1] = (rights[i] + a[i] * beta[i]) / (c[i] - a[i] * alpha[i]);
+		alpha[i + 1] = b / (c - a * alpha[i]);
+		beta[i + 1] = (rights[i] + a * beta[i]) / (c - a * alpha[i]);
 	}
 
 	std::vector<double> x(n);
-	x[n - 1] = (rights[n - 1] + a[n - 1] * beta[n - 1]) / (c[n - 1] - a[n - 1] * alpha[n - 1]);
-
+	x[n - 1] = (rights[n - 1] + a * beta[n - 1]) / (c - a * alpha[n - 1]);
 	for (int i = n - 2; i >= 0; i--) {
 		x[i] = alpha[i + 1] * x[i + 1] + beta[i + 1];
 	}
@@ -286,8 +276,8 @@ std::vector<double> run_through_method(std::vector<double> a, std::vector<double
 	return x;
 }
 
-void finite_difference_scheme_method_unevident(std::ostream& ostr) {
-	ostr << std::endl << "Finite difference scheme method (not obvious scheme)" << std::endl;
+void finite_difference_scheme_method_implicit(std::ostream& ostr) {
+	ostr << std::endl << "Finite difference scheme method (implicit scheme)" << std::endl;
 
 	double max_delta = 0;
 	std::vector<double> u_values;
@@ -314,27 +304,13 @@ void finite_difference_scheme_method_unevident(std::ostream& ostr) {
 		int i = 1;
 		while (t <= 1.001) {
 			double coef = (tau * CHI) / (h * h);
-
-			std::vector<double> a, c, b;
-			a.push_back(0);
-			for (int k = 0; k < N; k++) {
-				if (k - 1 >= 0) {
-					a.push_back(coef);
-				}
-
-				c.push_back(1 + 2 * coef);
-				if (k + 1 < N) {
-					b.push_back(coef);
-				}
-			}
-
 			std::vector<double> rights;
 			for (int j = 1; j < N; j++) {
 				rights.push_back(u_values[j] + tau * f(tau * i, h * j));
 			}
 
 			rights.back() += coef;
-			rights = run_through_method(a, c, b, rights);
+			rights = run_through_method(coef, rights);
 			for (int j = 1; j <= rights.size(); j++) {
 				u_values[j] = rights[j - 1];
 			}
@@ -355,8 +331,7 @@ void finite_difference_scheme_method_unevident(std::ostream& ostr) {
 				std::setprecision(18);
 			if (delta < 0.0001) {
 				ostr << std::setprecision(14) << std::scientific << delta << std::setw(4) << "| ";
-			}
-			else {
+			} else {
 				ostr << std::fixed << delta << std::setw(4) << "| ";
 			}
 
