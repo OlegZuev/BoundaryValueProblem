@@ -3,6 +3,9 @@
 #include <ostream>
 #include <iomanip>
 #include <stdexcept>
+#include <math.h>
+#include <corecrt_math_defines.h>
+#include <vector>
 
 double coef_A(double x) {
 	switch (VARIANT) {
@@ -80,7 +83,8 @@ void runge_kutty_step(double z, double y, int i, double h, double& new_z, double
 	new_z = z + 1.0 / 6.0 * (k_z[0] + 2.0 * k_z[1] + 2.0 * k_z[2] + k_z[3]);
 }
 
-void runge_kutty_method(double y0, double alpha0, double& h, int iter, std::map<float, double>& z, std::map<float, double>& y, std::ostream& ostr) {
+void runge_kutty_method(double y0, double alpha0, double& h, int iter, std::map<float, double>& z,
+	std::map<float, double>& y, std::ostream& ostr) {
 	z.clear();
 	y.clear();
 	double delta = -1.0;
@@ -98,7 +102,8 @@ void runge_kutty_method(double y0, double alpha0, double& h, int iter, std::map<
 		if (abs(y_j - y_asterisk) >= EPS_AUTO_STEP) {
 			h /= 2.0;
 			i = 0;
-		} else {
+		}
+		else {
 			i++;
 			y[i * h] = y_j;
 			z[i * h] = z_j;
@@ -122,8 +127,7 @@ void runge_kutty_method(double y0, double alpha0, double& h, int iter, std::map<
 }
 
 
-void shooting_method(std::ostream& ostr)
-{
+void shooting_method(std::ostream& ostr) {
 	double y0 = 1.0, h = 0.1, a0 = 0, a1 = 3.0;
 	std::map<float, double> z, y;
 	int i = 1;
@@ -139,25 +143,26 @@ void shooting_method(std::ostream& ostr)
 		runge_kutty_method(y0, a2, h, i, z, y, ostr);
 		if (y[1.0] < 2.0) {
 			a0 = a2;
-		} else {
+		}
+		else {
 			a1 = a2;
 		}
 
 		i++;
 	} while (abs(y[1.0] - 2.0) > EPS_LIMIT);
 
-	ostr << std::endl << std::setw(9) << "x|" << std::setw(9) << "y(x)|" << std::setw(9) << "Ypr|" << std::setw(9) << "z(x)|" << std::setw(19) << "Delta|" << std::endl;
+	ostr << std::endl << std::setw(9) << "x|" << std::setw(9) << "y(x)|" << std::setw(9) << "Ypr|" << std::setw(9) <<
+		"z(x)|" << std::setw(19) << "Delta|" << std::endl;
 
 	double max_delta = 0;
 	double p = 0.00625;
-	for (double q = 0; q <= 1; q += p)
-	{
+	for (double q = 0; q <= 1; q += p) {
 		double error = abs(y[q] - coef_Y_pr(q, 0));
 
 		if (error > max_delta) {
 			max_delta = error;
 		}
-		
+
 		ostr << std::setw(9) << std::fixed << std::setprecision(5) << q << "|" << std::setw(9) << y[q]
 			<< "|" << std::setw(9) << coef_Y_pr(q, 0) << "|" << std::setw(9) << z[q] << "|" << std::setw(19);
 
@@ -167,11 +172,154 @@ void shooting_method(std::ostream& ostr)
 		else {
 			ostr << std::setprecision(15) << std::fixed << error << "|" << std::endl;
 		}
-		
+
 		if (abs(q - 0.96250) < 0.0001) {
 			p /= 2;
 		}
 	}
 
 	ostr << std::endl << "The absolute value of the maximum error: " << std::fixed << max_delta << std::endl;
+}
+
+double f(double t, double x) {
+	// u(t,x)=x + 0.1*t*sin(πx)*Variant
+	// f = u' - chi*u''
+	// return 1 + 0.1 * cos(M_PI * x) * M_PI * t * VARIANT
+	// 	+ 0.1 * sin(M_PI * x) * M_PI * M_PI * t * VARIANT * CHI;
+	//return 0.1 * variant * sin(M_PI * x) + 0.1 * 0.2 * M_PI * M_PI * t * variant * sin(M_PI * x);
+	return 0.1 * sin(M_PI * x) * VARIANT + 0.1 * sin(M_PI * x) * M_PI * M_PI * t * VARIANT * CHI;
+}
+
+double u(double t, double x) {
+	// u(t,x)=x + 0.1*t*sin(πx)*Variant
+	return x + 0.1 * t * sin(M_PI * x) * VARIANT;
+}
+
+
+//void finite_difference_scheme_method(std::ostream& ostr) {
+//	double m[COUNT_OF_ROWS];
+//	m[0] = compute_derivative_func(X_0);
+//	m[COUNT_OF_ROWS - 1] = compute_derivative_func(X_N);
+//	double alpha[COUNT_OF_ROWS];
+//	double beta[COUNT_OF_ROWS];
+//	alpha[1] = 0;
+//	beta[1] = m[0];
+//	// alpha[1] = -0.25;
+//	// beta[1] = 3 * (func(table_SP[1][0]) - func(0.8)) / H / 4;
+//	//beta[1] = (3 * (func(table_SP[2][0]) - func(table_SP[0][0])) / H - m[0]) / 4;
+
+//	for (int j = 1; j < COUNT_OF_ROWS - 1; j++) {
+//		alpha[j + 1] = -1 / (4 + alpha[j]);
+//		beta[j + 1] = (3 * (func(table_SP[j + 1][0]) - func(table_SP[j - 1][0])) / H - beta[j]) / (4 + alpha[j]);
+//	}
+
+//	for (int j = N - 1; j >= 0; j--) {
+//		m[j] = alpha[j + 1] * m[j + 1] + beta[j + 1];
+//	}
+//}
+
+//std::vector<double> evident_scheme(int n, int maxi)
+//{
+//	std::vector <double> u_n(n + 1);
+//	auto h = 1.0 / n;
+//	auto tau = h * h / (4 * CHI);
+//	for (auto j = 0; j < u_n.size(); j++)
+//	{
+//		u_n[j] = j * h;
+//	}
+
+//	auto new_u_n = u_n;
+//	for (auto i = 0; i < maxi; i++)
+//	{
+//		for (auto j = 1; j < u_n.size() - 1; j++)
+//			new_u_n[j] = u_n[j] + tau * (CHI * (u_n[j + 1] - 2 * u_n[j] + u_n[j - 1]) / (h * h) + f(tau * i, j * h));
+//		u_n = new_u_n;
+//	}
+//	return u_n;
+//}
+
+//double comput_delta(std::vector<double> u_values, int N, )
+//{
+//	double n = u_values.size() - 1;
+//	double h = 1.0 / n;
+//	double tau = notIneven ? h * h / (4 * chi) : h;
+//	double cur_max = 0;
+
+//	for (int j = 0; j <= n; j++)
+//	{
+//		if (abs(GetU(tau*i, j*h) - layer[j]) > cur_max)
+//			cur_max = abs(GetU(tau*i, j*h) - layer[j]);
+//	}
+//	return cur_max;
+//}
+
+void finite_difference_scheme_method_obvious(std::ostream& ostr) {
+	ostr << std::endl << "Finite difference scheme method (obvious scheme)" << std::endl;
+
+	double max_delta = 0;
+	std::vector<double> u_values;
+
+	for (int N = 8; N <= 32; N *= 2) {
+		ostr << "\nN = " << N << std::endl;
+		ostr << std::setw(7) << "t|" << std::setw(22) << "delta|" << std::setw(4) << "x:" << std::endl;
+		max_delta = 0;
+		double h = 1.0 / N;
+		double tau = (h * h) / (4 * CHI);
+		u_values.clear();
+		u_values.reserve(N + 1);
+
+		double t = 0;
+		int i = 0;
+		while (t <= 1.001) {
+			if (i == 0) {
+				for (int j = 0; j < N + 1; j++) {
+					u_values.push_back(j * h);
+				}
+			}
+			else {
+				std::vector<double> new_u_values(u_values);
+				for (int j = 1; j < N; j++) {
+					//unnew[j] = un[j] + tau * (chi * (un[j + 1] - 2 * un[j] + un[j - 1]) / (h * h) + GetF(tau*i, j*h));
+					new_u_values[j] = u_values[j] + tau * (CHI * (u_values[j + 1] - 2 * u_values[j] + u_values[j - 1]) /
+						(h * h) + f(t, j * h));
+				}
+				u_values = new_u_values;
+			}
+
+			double delta = 0;
+			for (int j = 0; j <= N; j++) {
+				double error = fabs(u(t, j * h) - u_values[j]);
+				if (error > delta) {
+					delta = error;
+				}
+			}
+
+			if (delta > max_delta) {
+				max_delta = delta;
+			}
+
+			if (i++ != 0) {
+				t += tau;
+			}
+
+			ostr << std::setw(7) << std::setprecision(3) << std::fixed << t << "|" << std::setw(22) <<
+				std::setprecision(18);
+			if (delta < 0.0001) {
+				ostr << std::setprecision(14) << std::scientific << delta << std::setw(4) << "| ";
+			}
+			else {
+				ostr << std::fixed << delta << std::setw(4) << "| ";
+			}
+
+			for (auto u_value : u_values) {
+				ostr << std::setw(9) << std::setprecision(5) << std::fixed << u_value << "|";
+			}
+
+			ostr << std::endl;
+
+
+		}
+
+		ostr << std::endl << "Del_T = " << max_delta << std::endl << std::endl;
+	}
 }

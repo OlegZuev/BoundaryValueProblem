@@ -14,5 +14,7 @@ int main()
 
 	out << "Variant: " << VARIANT << endl;
 
-	shooting_method( out);
+	//shooting_method( out);
+
+	finite_difference_scheme_method_obvious(out);
 }
