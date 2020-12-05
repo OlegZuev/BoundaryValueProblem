@@ -195,96 +195,39 @@ double u(double t, double x) {
 	return x + 0.1 * t * sin(M_PI * x) * VARIANT;
 }
 
-
-//void finite_difference_scheme_method(std::ostream& ostr) {
-//	double m[COUNT_OF_ROWS];
-//	m[0] = compute_derivative_func(X_0);
-//	m[COUNT_OF_ROWS - 1] = compute_derivative_func(X_N);
-//	double alpha[COUNT_OF_ROWS];
-//	double beta[COUNT_OF_ROWS];
-//	alpha[1] = 0;
-//	beta[1] = m[0];
-//	// alpha[1] = -0.25;
-//	// beta[1] = 3 * (func(table_SP[1][0]) - func(0.8)) / H / 4;
-//	//beta[1] = (3 * (func(table_SP[2][0]) - func(table_SP[0][0])) / H - m[0]) / 4;
-
-//	for (int j = 1; j < COUNT_OF_ROWS - 1; j++) {
-//		alpha[j + 1] = -1 / (4 + alpha[j]);
-//		beta[j + 1] = (3 * (func(table_SP[j + 1][0]) - func(table_SP[j - 1][0])) / H - beta[j]) / (4 + alpha[j]);
-//	}
-
-//	for (int j = N - 1; j >= 0; j--) {
-//		m[j] = alpha[j + 1] * m[j + 1] + beta[j + 1];
-//	}
-//}
-
-//std::vector<double> evident_scheme(int n, int maxi)
-//{
-//	std::vector <double> u_n(n + 1);
-//	auto h = 1.0 / n;
-//	auto tau = h * h / (4 * CHI);
-//	for (auto j = 0; j < u_n.size(); j++)
-//	{
-//		u_n[j] = j * h;
-//	}
-
-//	auto new_u_n = u_n;
-//	for (auto i = 0; i < maxi; i++)
-//	{
-//		for (auto j = 1; j < u_n.size() - 1; j++)
-//			new_u_n[j] = u_n[j] + tau * (CHI * (u_n[j + 1] - 2 * u_n[j] + u_n[j - 1]) / (h * h) + f(tau * i, j * h));
-//		u_n = new_u_n;
-//	}
-//	return u_n;
-//}
-
-//double comput_delta(std::vector<double> u_values, int N, )
-//{
-//	double n = u_values.size() - 1;
-//	double h = 1.0 / n;
-//	double tau = notIneven ? h * h / (4 * chi) : h;
-//	double cur_max = 0;
-
-//	for (int j = 0; j <= n; j++)
-//	{
-//		if (abs(GetU(tau*i, j*h) - layer[j]) > cur_max)
-//			cur_max = abs(GetU(tau*i, j*h) - layer[j]);
-//	}
-//	return cur_max;
-//}
-
-void finite_difference_scheme_method_obvious(std::ostream& ostr) {
+void finite_difference_scheme_method_evident(std::ostream& ostr) {
 	ostr << std::endl << "Finite difference scheme method (obvious scheme)" << std::endl;
 
 	double max_delta = 0;
 	std::vector<double> u_values;
 
 	for (int N = 8; N <= 32; N *= 2) {
-		ostr << "\nN = " << N << std::endl;
-		ostr << std::setw(7) << "t|" << std::setw(22) << "delta|" << std::setw(4) << "x:" << std::endl;
+		ostr << std::endl << "N = " << N << std::endl;
+		ostr << std::setw(8) << "t  |" << std::setw(22) << "delta        " << std::setw(4) << "x:";
 		max_delta = 0;
 		double h = 1.0 / N;
 		double tau = (h * h) / (4 * CHI);
 		u_values.clear();
 		u_values.reserve(N + 1);
 
-		double t = 0;
-		int i = 0;
+		for (int j = 0; j < N + 1; j++) {
+			u_values.push_back(j * h);
+		}
+
+		for (auto u_value : u_values) {
+			ostr << std::setw(9) << std::setprecision(5) << std::fixed << u_value << "|";
+		}
+		ostr << std::endl;
+
+		double t = tau;
+		int i = 1;
 		while (t <= 1.001) {
-			if (i == 0) {
-				for (int j = 0; j < N + 1; j++) {
-					u_values.push_back(j * h);
-				}
+			std::vector<double> new_u_values(u_values);
+			for (int j = 1; j < N; j++) {
+				new_u_values[j] = u_values[j] + tau * (CHI * (u_values[j + 1] - 2 * u_values[j] + u_values[j - 1]) /
+					(h * h) + f(t - tau, j * h));
 			}
-			else {
-				std::vector<double> new_u_values(u_values);
-				for (int j = 1; j < N; j++) {
-					//unnew[j] = un[j] + tau * (chi * (un[j + 1] - 2 * un[j] + un[j - 1]) / (h * h) + GetF(tau*i, j*h));
-					new_u_values[j] = u_values[j] + tau * (CHI * (u_values[j + 1] - 2 * u_values[j] + u_values[j - 1]) /
-						(h * h) + f(t, j * h));
-				}
-				u_values = new_u_values;
-			}
+			u_values = new_u_values;
 
 			double delta = 0;
 			for (int j = 0; j <= N; j++) {
@@ -296,10 +239,6 @@ void finite_difference_scheme_method_obvious(std::ostream& ostr) {
 
 			if (delta > max_delta) {
 				max_delta = delta;
-			}
-
-			if (i++ != 0) {
-				t += tau;
 			}
 
 			ostr << std::setw(7) << std::setprecision(3) << std::fixed << t << "|" << std::setw(22) <<
@@ -317,9 +256,120 @@ void finite_difference_scheme_method_obvious(std::ostream& ostr) {
 
 			ostr << std::endl;
 
-
+			t += tau;
+			i++;
 		}
 
-		ostr << std::endl << "Del_T = " << max_delta << std::endl << std::endl;
+		ostr << std::endl << "Del_T = " << std::setprecision(17) << max_delta << std::endl << std::endl;
+	}
+}
+
+std::vector<double> run_through_method(std::vector<double> a, std::vector<double> c, std::vector<double> b,
+	std::vector<double> rights) {
+	int n = rights.size();
+	std::vector<double> alpha(n), beta(n);
+	alpha[1] = b[0] / c[0];
+	beta[1] = rights[0] / c[0];
+
+	for (int i = 1; i < n - 1; i++) {
+		alpha[i + 1] = b[i] / (c[i] - a[i] * alpha[i]);
+		beta[i + 1] = (rights[i] + a[i] * beta[i]) / (c[i] - a[i] * alpha[i]);
+	}
+
+	std::vector<double> x(n);
+	x[n - 1] = (rights[n - 1] + a[n - 1] * beta[n - 1]) / (c[n - 1] - a[n - 1] * alpha[n - 1]);
+
+	for (int i = n - 2; i >= 0; i--) {
+		x[i] = alpha[i + 1] * x[i + 1] + beta[i + 1];
+	}
+
+	return x;
+}
+
+void finite_difference_scheme_method_unevident(std::ostream& ostr) {
+	ostr << std::endl << "Finite difference scheme method (not obvious scheme)" << std::endl;
+
+	double max_delta = 0;
+	std::vector<double> u_values;
+
+	for (int N = 8; N <= 32; N *= 2) {
+		ostr << std::endl << "N = " << N << std::endl;
+		ostr << std::setw(8) << "t  |" << std::setw(22) << "delta        " << std::setw(4) << "x:";
+		max_delta = 0;
+		double h = 1.0 / N;
+		double tau = h;
+		u_values.clear();
+		u_values.reserve(N + 1);
+
+		for (int j = 0; j < N + 1; j++) {
+			u_values.push_back(j * h);
+		}
+
+		for (auto u_value : u_values) {
+			ostr << std::setw(9) << std::setprecision(5) << std::fixed << u_value << "|";
+		}
+		ostr << std::endl;
+
+		double t = tau;
+		int i = 1;
+		while (t <= 1.001) {
+			double coef = (tau * CHI) / (h * h);
+
+			std::vector<double> a, c, b;
+			a.push_back(0);
+			for (int k = 0; k < N; k++) {
+				if (k - 1 >= 0) {
+					a.push_back(coef);
+				}
+
+				c.push_back(1 + 2 * coef);
+				if (k + 1 < N) {
+					b.push_back(coef);
+				}
+			}
+
+			std::vector<double> rights;
+			for (int j = 1; j < N; j++) {
+				rights.push_back(u_values[j] + tau * f(tau * i, h * j));
+			}
+
+			rights.back() += coef;
+			rights = run_through_method(a, c, b, rights);
+			for (int j = 1; j <= rights.size(); j++) {
+				u_values[j] = rights[j - 1];
+			}
+
+			double delta = 0;
+			for (int j = 0; j <= N; j++) {
+				double error = fabs(u(t, j * h) - u_values[j]);
+				if (error > delta) {
+					delta = error;
+				}
+			}
+
+			if (delta > max_delta) {
+				max_delta = delta;
+			}
+
+			ostr << std::setw(7) << std::setprecision(3) << std::fixed << t << "|" << std::setw(22) <<
+				std::setprecision(18);
+			if (delta < 0.0001) {
+				ostr << std::setprecision(14) << std::scientific << delta << std::setw(4) << "| ";
+			}
+			else {
+				ostr << std::fixed << delta << std::setw(4) << "| ";
+			}
+
+			for (auto u_value : u_values) {
+				ostr << std::setw(9) << std::setprecision(5) << std::fixed << u_value << "|";
+			}
+
+			ostr << std::endl;
+
+			t += tau;
+			i++;
+		}
+
+		ostr << std::endl << "Del_T = " << std::setprecision(17) << max_delta << std::endl << std::endl;
 	}
 }

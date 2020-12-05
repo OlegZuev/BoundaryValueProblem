@@ -16,5 +16,7 @@ int main()
 
 	//shooting_method( out);
 
-	finite_difference_scheme_method_obvious(out);
+	//finite_difference_scheme_method_evident(out);
+
+	finite_difference_scheme_method_unevident(out);
 }
