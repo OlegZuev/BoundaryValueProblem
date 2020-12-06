@@ -19,8 +19,8 @@ double coef_Y_pr(double x, int derivative_number);
 
 void runge_kutty_step(double z, double y, int i, double h, double& new_z, double& new_y);
 
-void runge_kutty_method(double y0, double alpha0, double& h, int iter, double& max_delta,
-                                            std::map<float, double>& z, std::map<float, double>& y, std::ostream& ostr);
+void runge_kutty_method(double y0, double alpha0, double& h, int iter, std::map<float, double>& z, std::map<float, double>& y, std::ostream& ostr);
+
 void shooting_method(std::ostream& ostr);
 
 void finite_difference_scheme_method_explicit(std::ostream& ostr);
