@@ -157,6 +157,7 @@ void shooting_method(std::ostream& ostr) {
 	std::map<float, double> z, y;
 	int i = 1;
 
+	ostr << "Shooting method" << std::endl;
 	ostr << std::setw(4) << std::setprecision(0) << "Itr|" << std::setw(9) << "z(0)|"
 		<< std::setw(9) << "y(0)|" << std::setw(20) << "Delta" << std::endl;
 
